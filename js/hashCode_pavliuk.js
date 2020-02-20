@@ -105,8 +105,9 @@ function getBestLib(libraries, scores, haveDays, bookKoef, coefLibraries) {
   return libStores[maxIndex];
 }
 
-async function main(path, fileName) {
+async function main(path) {
   const file = await loadData(path);
+
   const initialData = parseFile(file);
   const { main, scores, libraries } = initialData;
   const { books, libraries: count_libraries, days } = main;
@@ -153,20 +154,32 @@ async function main(path, fileName) {
 }
 
 async function createResults() {
-  const pathList = [
-    { path: "../a_example.txt", fileName: "a_example_result.txt" },
-    { path: "../b_read_on.txt", fileName: "b_read_on_result.txt" }
-    // { path: '../c_incunabula.txt', fileName: 'c_incunabula_result.txt' },
-    // { path: '../e_so_many_books.txt', fileName: 'e_so_many_books_result.txt' },
-    // { path: '../f_libraries_of_the_world.txt', fileName: 'f_libraries_of_the_world_result.txt' },
-  ];
+  try {
+    const pathList = [
+      { path: "../a_example.txt", fileName: "a_example_result.txt" },
+      { path: "../b_read_on.txt", fileName: "b_read_on_result.txt" },
+      { path: "../c_incunabula.txt", fileName: "c_incunabula_result.txt" },
+      {
+        path: "../e_so_many_books.txt",
+        fileName: "e_so_many_books_result.txt"
+      },
+      {
+        path: "../f_libraries_of_the_world.txt",
+        fileName: "f_libraries_of_the_world_result.txt"
+      }
+    ];
 
-  async function calc(path, fileName) {
-    const result = await main(path);
-    await createResults(result, pathList);
+    async function calc(path, fileName) {
+      const result = await main(path);
+      await createFileResult(result, fileName);
+    }
+
+    await Promise.all(pathList.map(item => calc(item.path, item.fileName)));
+
+    console.log("Done!!!");
+  } catch (e) {
+    console.log(e);
   }
-
-  await Promise.all(pathList.map(item => calc(item.path, item.fileName)));
 }
 
 createResults();
