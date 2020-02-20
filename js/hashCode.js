@@ -8,12 +8,15 @@ function parseLibraries(list) {
     const books = [...new Set(list[i + 1].split(" ").map(Number))];
 
     libraries.push({
+      id: i / 2,
       booksAmount,
       process,
       perDay,
       books
     });
   }
+
+  console.log("libraries", libraries);
 
   return libraries;
 }
@@ -33,6 +36,24 @@ function parseFile(data) {
   };
 }
 
+async function createFileResult(list, fileName = "result.txt") {
+  try {
+    const data = list.reduce((acc, item) => {
+      const library = `${item.libraryId} ${
+        item.booksForScanning
+      }\n${item.booksIds.join(" ")}`;
+
+      return `${acc}\n${library}`;
+    }, `${list.length}`);
+
+    await fs.writeFile(fileName, data);
+
+    console.log("Done!");
+  } catch (e) {
+    throw e;
+  }
+}
+
 async function loadData(path) {
   try {
     const file = await fs.readFile(path, "binary");
@@ -44,10 +65,27 @@ async function loadData(path) {
 }
 
 async function main(path) {
-  const file = await loadData(path);
-  const initialData = parseFile(file);
+  try {
+    const file = await loadData(path);
+    const initialData = parseFile(file);
 
-  console.log("file", initialData);
+    // await createFileResult([
+    //   {
+    //     libraryId: 1,
+    //     booksScanned: 3,
+    //     booksIds: [5, 2, 3]
+    //   },
+    //   {
+    //     libraryId: 0,
+    //     booksScanned: 5,
+    //     booksIds: [0, 1, 2, 3, 4]
+    //   }
+    // ]);
+
+    console.log("file", initialData);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
-main(__dirname + "/a_example.txt");
+main("../a_example.txt");
