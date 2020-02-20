@@ -34,7 +34,7 @@ function parseLibraries(list) {
     });
   }
 
-  console.log("libraries", libraries);
+  // console.log("libraries", libraries);
 
   return libraries;
 }
@@ -94,7 +94,7 @@ function getBestLib(libraries, scores, haveDays, bookKoef, coefLibraries) {
     );
     return score;
   });
-  console.log("libStores =>", libStores);
+  // console.log('libStores =>', libStores);
   let maxIndex = 0;
   for (let i = 1; i < libraries.length; i++) {
     if (libStores[maxIndex].sum < libStores[i].sum) {
@@ -119,7 +119,7 @@ async function main(path) {
   for (let l = 0; l < count_libraries; l++) {
     coefLibraries[l] = (days - libraries[l].process) / days;
     for (let b = 0; b < books; b++) {
-      console.log("libraries[l] =>", libraries[l]);
+      // console.log('libraries[l] =>', libraries[l]);
       if (libraries[l].books.includes(b)) {
         arrayBook[b]++;
       }
@@ -128,26 +128,35 @@ async function main(path) {
 
   const booksCoef = arrayBook.map(i => i / books);
 
-  let maxLibData = getBestLib(
-    libraries,
-    scores,
-    days,
-    booksCoef,
-    coefLibraries
-  );
-
   let res = [];
-  res.push(maxLibData);
-  let currentDay = libraries[maxLibData.libraryId].process;
-  let countLib = 1;
-  while (currentDay <= days || countLib < libraries.length) {
-    const newLib = libraries.filter(item => {});
+  let currentDay = 0;
+  let newLib = libraries;
+  let countLib = 0;
+  while (currentDay <= days && countLib < libraries.length) {
+    console.log(
+      `${currentDay} <= ${days} && ${countLib} < ${libraries.length}`
+    );
+    let maxLibData = getBestLib(
+      newLib,
+      scores,
+      days - currentDay,
+      booksCoef,
+      coefLibraries
+    );
 
-    currentDay = libraries[maxLibData.libraryId].process;
+    res.push(maxLibData);
+    newLib = libraries.filter(item => {
+      return item.libraryId !== maxLibData.libraryId;
+    });
+
+    currentDay += libraries[maxLibData.libraryId].process;
     countLib++;
   }
 
-  console.log("booksCoef =>", booksCoef);
+  // console.log('booksCoef =>', booksCoef);
+  // console.log('res =>', res);
+
+  return res;
   // console.log('coefLibraries =>', coefLibraries);
   // console.log("file", initialData);
   // console.log('aa =>', aa);
