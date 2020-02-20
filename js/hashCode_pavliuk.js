@@ -66,7 +66,7 @@ function getPosibleSkore(librari, scores, haveDays, bookKoef, coefLibraries) {
   return {
     sum,
     libraryId,
-    booksScanned: posibleBook,
+    booksForScanning: posibleBook,
     booksIds: c_books.slice(0, posibleBook),
   };
 }
@@ -86,6 +86,24 @@ function getBestLib(libraries, scores, haveDays, bookKoef, coefLibraries) {
   }
 
   return libStores[maxIndex];
+}
+
+async function createFileResult(list, fileName = "result.txt") {
+  try {
+    const data = list.reduce((acc, item) => {
+      const library = `${item.libraryId} ${
+        item.booksForScanning
+      }\n${item.booksIds.join(" ")}`;
+
+      return `${acc}\n${library}`;
+    }, `${list.length}`);
+
+    await fs.writeFile(fileName, data);
+
+    console.log("Done!");
+  } catch (e) {
+    throw e;
+  }
 }
 
 async function main(path) {
@@ -121,7 +139,14 @@ async function main(path) {
     res.push(maxLibData);
     newLib = libraries.filter(item => {
       return item.libraryId !== maxLibData.libraryId
+    }).map(item => {
+      item.books.filter(book => !maxLibData.booksIds.includes(book));
+      return item;
     });
+
+    /*
+
+    */
 
 
     currentDay += libraries[maxLibData.libraryId].process;
@@ -133,6 +158,8 @@ async function main(path) {
   // console.log('booksCoef =>', booksCoef);
   // console.log('res =>', res);
 
+  await createFileResult(res);
+
   return res;
   // console.log('coefLibraries =>', coefLibraries);
   // console.log("file", initialData);
@@ -142,3 +169,4 @@ async function main(path) {
 
 
 main(__dirname + "/c_incunabula.txt");
+// main(__dirname + "/a_example.txt");
