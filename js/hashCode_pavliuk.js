@@ -1,5 +1,23 @@
 const fs = require("fs").promises;
 
+async function createFileResult(list, fileName = "result.txt") {
+  try {
+    const data = list.reduce((acc, item) => {
+      const library = `${item.libraryId} ${
+        item.booksForScanning
+      }\n${item.booksIds.join(" ")}`;
+
+      return `${acc}\n${library}`;
+    }, `${list.length}`);
+
+    await fs.writeFile(fileName, data);
+
+    console.log("Done!");
+  } catch (e) {
+    throw e;
+  }
+}
+
 function parseLibraries(list) {
   const libraries = [];
 
@@ -47,13 +65,7 @@ async function loadData(path) {
 }
 
 function getPosibleSkore(librari, scores, haveDays, bookKoef, coefLibraries) {
-  const {
-      booksAmount,
-      process,
-      perDay,
-      books,
-      libraryId,
-    } = librari;
+  const { booksAmount, process, perDay, books, libraryId } = librari;
   const l = Math.floor(haveDays - process) * perDay;
   const posibleBook = l > booksAmount ? booksAmount : l;
   const c_books = [].concat(books).sort((a, b) => {
@@ -71,10 +83,15 @@ function getPosibleSkore(librari, scores, haveDays, bookKoef, coefLibraries) {
   };
 }
 
-
 function getBestLib(libraries, scores, haveDays, bookKoef, coefLibraries) {
   const libStores = libraries.map(librari => {
-    const score = getPosibleSkore(librari, scores, haveDays, bookKoef, coefLibraries);
+    const score = getPosibleSkore(
+      librari,
+      scores,
+      haveDays,
+      bookKoef,
+      coefLibraries
+    );
     return score;
   });
   // console.log('libStores =>', libStores);
@@ -108,33 +125,50 @@ async function createFileResult(list, fileName = "result.txt") {
 
 async function main(path) {
   const file = await loadData(path);
+
   const initialData = parseFile(file);
   const { main, scores, libraries } = initialData;
-  const {books, libraries: count_libraries, days } = main;
+  const { books, libraries: count_libraries, days } = main;
   let arrayBook = [];
   for (let b = 0; b < books; b++) {
-      arrayBook[b] = 0;
+    arrayBook[b] = 0;
   }
   let coefLibraries = [];
   for (let l = 0; l < count_libraries; l++) {
     coefLibraries[l] = (days - libraries[l].process) / days;
     for (let b = 0; b < books; b++) {
       // console.log('libraries[l] =>', libraries[l]);
-      if(libraries[l].books.includes(b)) {
-         arrayBook[b]++;
+      if (libraries[l].books.includes(b)) {
+        arrayBook[b]++;
       }
     }
   }
 
-  const booksCoef = arrayBook.map(i=>i/books);
+  const booksCoef = arrayBook.map(i => i / books);
 
   let res = [];
-  let currentDay = 0;
   let newLib = libraries;
+
+  let maxLibData0 = getBestLib(
+      newLib,
+      scores,
+      days - currentDay,
+      booksCoef,
+      coefLibraries
+    );
+  let currentDay = libraries[maxLibData0.libraryId].process;
   let countLib = 0;
   while (currentDay <= days && countLib < libraries.length) {
-    console.log(`${currentDay} <= ${days} && ${countLib} < ${libraries.length}`);
-    let maxLibData = getBestLib(newLib, scores, days - currentDay, booksCoef, coefLibraries);
+    console.log(
+      `${currentDay} <= ${days} && ${countLib} < ${libraries.length}`
+    );
+    let maxLibData = getBestLib(
+      newLib,
+      scores,
+      days - currentDay,
+      booksCoef,
+      coefLibraries
+    );
 
     res.push(maxLibData);
     newLib = libraries.filter(item => {
@@ -144,16 +178,10 @@ async function main(path) {
       return item;
     });
 
-    /*
-
-    */
-
 
     currentDay += libraries[maxLibData.libraryId].process;
     countLib++;
   }
-
-
 
   // console.log('booksCoef =>', booksCoef);
   // console.log('res =>', res);
@@ -166,7 +194,33 @@ async function main(path) {
   // console.log('aa =>', aa);
 }
 
+async function createResults() {
+  try {
+    const pathList = [
+      { path: "../a_example.txt", fileName: "a_example_result.txt" },
+      { path: "../b_read_on.txt", fileName: "b_read_on_result.txt" },
+      { path: "../c_incunabula.txt", fileName: "c_incunabula_result.txt" },
+      {
+        path: "../e_so_many_books.txt",
+        fileName: "e_so_many_books_result.txt"
+      },
+      {
+        path: "../f_libraries_of_the_world.txt",
+        fileName: "f_libraries_of_the_world_result.txt"
+      }
+    ];
 
+    async function calc(path, fileName) {
+      const result = await main(path);
+      await createFileResult(result, fileName);
+    }
 
-main(__dirname + "/c_incunabula.txt");
-// main(__dirname + "/a_example.txt");
+    await Promise.all(pathList.map(item => calc(item.path, item.fileName)));
+
+    console.log("Done!!!");
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+createResults();
